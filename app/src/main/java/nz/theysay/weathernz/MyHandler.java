@@ -277,7 +277,7 @@ public class MyHandler extends Handler {
 
             JSONObject joMain = joSlots.getJSONObject("main");
             JSONArray jaMainModules = joMain.getJSONArray("modules");
-            JSONObject joMainModule1 = jaMainModules.getJSONObject(1);
+            JSONObject joMainModule1 = jaMainModules.getJSONObject(2);
             JSONObject joGraph = joMainModule1.getJSONObject("graph");
             JSONArray joColumns = joGraph.getJSONArray("columns");
 
@@ -419,7 +419,7 @@ public class MyHandler extends Handler {
 
 
         } catch (JSONException e) {
-
+                e.printStackTrace();
         }
 
 

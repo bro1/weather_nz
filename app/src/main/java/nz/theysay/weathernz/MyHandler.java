@@ -442,7 +442,7 @@ public class MyHandler extends Handler {
                 fl = " (feels like " + temperatureFeelsLike + ")";
             }
 
-            String dayForecast =  "Low:" + temperatureLow + kDegrees+ " now: " + temperatureCurrent + kDegrees + fl + " high: " + temperatureHigh + kDegrees;
+            String dayForecast =  "Low: " + temperatureLow + kDegrees+ " now: " + temperatureCurrent + kDegrees + fl + " high: " + temperatureHigh + kDegrees;
 
             return dayForecast;
 
@@ -539,8 +539,9 @@ public class MyHandler extends Handler {
                                 translate(d.morningCondition) + " " +
                                 translate(d.afternoonCondition) + " " +
                                 translate(d.eveningCondition))
-                        .append("\n")
-                        .append(d.statementDescription);
+//                        .append("\n")
+//                        .append(d.statementDescription)
+                ;
 
 
             return r;

@@ -26,7 +26,7 @@
     <TextView
         android:id="@+id/textview_day1_desc"
         android:layout_width="match_parent"
-        android:layout_height="0pt"
+        android:layout_height="wrap_content"
         android:text="@string/hello_first_fragment"
         app:layout_constraintTop_toBottomOf="@id/textview_day1_summary"
     />
@@ -46,15 +46,15 @@
         android:text="@string/hello_first_fragment"
         app:layout_constraintTop_toBottomOf="@id/textview_day2_summary" />
 
-    <TextView
-        android:id="@+id/textview_7days"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/hello_first_fragment"
-        app:layout_constraintTop_toBottomOf="@id/textview_day2_desc"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-         />
+<!--    <TextView-->
+<!--        android:id="@+id/textview_7days"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="@string/hello_first_fragment"-->
+<!--        app:layout_constraintTop_toBottomOf="@id/textview_day2_desc"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--         />-->
 
 
     <ScrollView
@@ -65,7 +65,7 @@
         app:layout_constraintBottom_toTopOf="@+id/button_7days"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/textview_7days">
+        app:layout_constraintTop_toBottomOf="@id/textview_day2_desc">
 
         <TextView
             android:id="@+id/textview_first"

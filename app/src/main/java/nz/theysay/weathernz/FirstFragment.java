@@ -36,7 +36,7 @@ public class FirstFragment extends Fragment {
 
         if (MyHandler.forecast2Days != null) {
             MyHandler mh = new MyHandler(Looper.getMainLooper(), getActivity());
-            mh.displayForecast2Days(MyHandler.forecast2Days);
+            mh.displayForecast2Days(MyHandler.forecast2Days, MyHandler.forecast2DaysGraph, MyHandler.forecast2DaysConditions);
         } else {
             loadWeather(getContext(), getActivity());
         }

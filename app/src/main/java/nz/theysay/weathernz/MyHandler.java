@@ -26,7 +26,11 @@ import java.util.List;
 public class MyHandler extends Handler {
 
     public static Forecast forecast7Days = null;
+
+    // TODO: rename to forecastCurrentConditions
     public static Forecast forecast2Days = null;
+    public static Forecast forecast2DaysGraph = null;
+    public static Forecast forecast2DaysConditions = null;
 
     final String kSunny =  "☀";
     final String kPartCloud =  "\uD83C\uDF24";
@@ -50,13 +54,36 @@ public class MyHandler extends Handler {
     @Override
     public void handleMessage(Message msg) {
 
-        // full response
+        // current data
         if (msg.what == 1) {
             String content = (String) msg.obj;
 
             forecast2Days = processJSONWeather(content);
-            displayForecast2Days(forecast2Days);
+            displayForecast2Days(forecast2Days, forecast2DaysGraph, forecast2DaysConditions);
         }
+
+        // 48 hour graph
+        if (msg.what == 4) {
+            String content = (String) msg.obj;
+
+            forecast2DaysGraph = processJSONGraph(content);
+            //displayForecast2Days(forecast2Days);
+            displayForecast2Days(forecast2Days, forecast2DaysGraph, forecast2DaysConditions);
+        }
+
+
+        // 2 days conditions
+        if (msg.what == 5) {
+            String content = (String) msg.obj;
+            forecast2DaysConditions = process2DaysConditions(content);
+            //displayForecast2Days(forecast2Days);
+            displayForecast2Days(forecast2Days, forecast2DaysGraph, forecast2DaysConditions);
+        }
+
+
+
+
+
 
         // any exception
         if (msg.what == 2) {
@@ -82,27 +109,34 @@ public class MyHandler extends Handler {
     }
 
 
-    public void displayForecast2Days(Forecast t) {
-        TextView txtToday = (TextView) activity.findViewById(R.id.textview_today);
+    public void displayForecast2Days(Forecast t, Forecast graph, Forecast f2days) {
 
+        TextView txtToday = (TextView) activity.findViewById(R.id.textview_today);
         if (txtToday == null) return;
 
-        txtToday.setText(t.getToday());
+        if (t != null ) {
+            txtToday.setText(t.getToday());
+        }
 
-        TextView txtDay1Summary = (TextView) activity.findViewById(R.id.textview_day1_summary);
-        txtDay1Summary.setText(t.getDaySummary(0));
+        if (f2days != null) {
 
-        TextView txtDay1Desc = (TextView) activity.findViewById(R.id.textview_day1_desc);
-        txtDay1Desc.setText(t.getDayDesc(0));
+            TextView txtDay1Summary = (TextView) activity.findViewById(R.id.textview_day1_summary);
+            txtDay1Summary.setText(f2days.getDaySummary(0));
 
-        TextView txtDay2Summary = (TextView) activity.findViewById(R.id.textview_day2_summary);
-        txtDay2Summary.setText(t.getDaySummary(1));
+            TextView txtDay1Desc = (TextView) activity.findViewById(R.id.textview_day1_desc);
+            txtDay1Desc.setText(f2days.getDayDesc(0));
 
-        TextView txtDay2Desc = (TextView) activity.findViewById(R.id.textview_day2_desc);
-        txtDay2Desc.setText(t.getDayDesc(1));
+            TextView txtDay2Summary = (TextView) activity.findViewById(R.id.textview_day2_summary);
+            txtDay2Summary.setText(f2days.getDaySummary(1));
 
-        TextView txtText = (TextView) activity.findViewById(R.id.textview_first);
-        txtText.setText(t.getCurrentTemperature());
+            TextView txtDay2Desc = (TextView) activity.findViewById(R.id.textview_day2_desc);
+            txtDay2Desc.setText(f2days.getDayDesc(1));
+        }
+
+        if (graph != null) {
+            TextView txtText = (TextView) activity.findViewById(R.id.textview_first);
+            txtText.setText(graph.getCurrentTemperature());
+        }
 
     }
 
@@ -120,22 +154,11 @@ public class MyHandler extends Handler {
 
         try {
             JSONObject json = new JSONObject(content);
-            // jq .layout.primary.slots[\"left-major\"].modules[0].observations.temperature wellington_sample.json
-            JSONObject joLayout = json.getJSONObject("layout");
-            JSONObject joPrimary = joLayout.getJSONObject("primary");
-            JSONObject joSlots = joPrimary.getJSONObject("slots");
-
-            JSONObject joMain = joSlots.getJSONObject("main");
-            JSONArray jaMainModules = joMain.getJSONArray("modules");
 
             Date todayNow = new Date();
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ssZ");
 
-
-            // jq ".layout.primary.slots.main.modules[0].days[] | {date, breakdown, forecasts}" wellington*4
-
-            JSONObject joMainModule0 = jaMainModules.getJSONObject(0);
-            JSONArray jaDays = joMainModule0.getJSONArray("days");
+            JSONArray jaDays = json.getJSONArray("days");
 
             for (int i = 0; i < jaDays.length() ; i++) {
 
@@ -153,16 +176,6 @@ public class MyHandler extends Handler {
                 // breakdown is only available for the first 3 days
 
                 f.dayCondition = joDay.getString("condition");
-
-                // I don't think I need breakdown for each day
-//                if (joDay.has("breakdown")) {
-//                    JSONObject bd = joDay.getJSONObject("breakdown");
-//
-//                    f.overnightCondition = bd.getJSONObject("overnight").getString("condition");
-//                    f.morningCondition = bd.getJSONObject("morning").getString("condition");
-//                    f.afternoonCondition = bd.getJSONObject("afternoon").getString("condition");
-//                    f.eveningCondition = bd.getJSONObject("evening").getString("condition");
-//                }
 
                 JSONObject forecast = joDay.getJSONArray("forecasts").getJSONObject(0);
                 f.low = forecast.getString("lowTemp");
@@ -246,89 +259,35 @@ public class MyHandler extends Handler {
 
         try {
             JSONObject json = new JSONObject(content);
-            // jq .layout.primary.slots[\"left-major\"].modules[0].observations.temperature wellington_sample.json
-            JSONObject joLayout = json.getJSONObject("layout");
-            JSONObject joPrimary = joLayout.getJSONObject("primary");
-            JSONObject joSlots = joPrimary.getJSONObject("slots");
-            JSONObject joLeftMajor = joSlots.getJSONObject("left-major");
-            JSONArray jaModules = joLeftMajor.getJSONArray("modules");
-            JSONObject joModule0 = jaModules.getJSONObject(0);
-            JSONObject joObservations = joModule0.getJSONObject("observations");
+            JSONObject joObservations = json.getJSONObject("observations");
             JSONArray jaTemperature = joObservations.getJSONArray("temperature");
             JSONObject joTemperature0 = jaTemperature.getJSONObject(0);
             r.temperatureCurrent = joTemperature0.getDouble("current");
             r.temperatureFeelsLike = joTemperature0.getInt("feelsLike");
             r.temperatureHigh = joTemperature0.getInt("high");
             r.temperatureLow = joTemperature0.getInt("low");
+            return r;
+
+        } catch (JSONException e) {
+                e.printStackTrace();
+        }
 
 
-
-            //   {
-            //    "current": 12.6,
-            //    "feelsLike": 12,
-            //    "high": 17,
-            //    "low": 10,
-            //    "title": ""
-            //  }
+        return r;
+    }
 
 
+    private Forecast process2DaysConditions(String content) {
 
-            // jq .layout.primary.slots.main.modules[1].graph.columns wellington_sample.json
+        Forecast r = new Forecast();
 
-            JSONObject joMain = joSlots.getJSONObject("main");
-            JSONArray jaMainModules = joMain.getJSONArray("modules");
-            JSONObject joMainModule1 = jaMainModules.getJSONObject(2);
-            JSONObject joGraph = joMainModule1.getJSONObject("graph");
-            JSONArray joColumns = joGraph.getJSONArray("columns");
-
-
-            // Each object looks like this
-            // 	{
-            //  	"date": "2021-10-31T01:00:00+13:00",
-            //		"rainFallPerHour": "0.2",
-            //		"rainfall": "0.2",
-            //		"temperature": "15.1",
-            //		"wind": {
-            //			"direction": "NW",
-            //			"speed": "20"
-            //			}
-            //		},
-
+        try {
+            JSONObject json = new JSONObject(content);
 
             Date todayNow = new Date();
 
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-            for (int i = 0; i< joColumns.length(); i++) {
-                Graph g = new Graph();
-                JSONObject jograph = joColumns.getJSONObject(i);
-                try {
-                    g.date = df.parse(jograph.getString("date"));
-                    System.out.println(g.date);
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
-                g.rainFallPerHour = jograph.getString("rainFallPerHour");
-                g.temperature = jograph.getString("temperature");
-
-                JSONObject joWind = jograph.getJSONObject("wind");
-                
-                g.windDirection = joWind.getString("direction");
-                g.windSpeed = joWind.getString("speed");
-
-                if (g.date.after(todayNow)) {
-                    r.hourlyForecast.add(g);
-                }
-            }
-
-
-
-
-
-
-            // jq ".layout.primary.slots.main.modules[0].days[] | {date, breakdown, forecasts}" wellington*4
-
-            JSONObject joMainModule0 = jaMainModules.getJSONObject(0);
-            JSONArray jaDays = joMainModule0.getJSONArray("days");
+            JSONArray jaDays = json.getJSONArray("days");
 
             for (int i = 0; i < jaDays.length() ; i++) {
 
@@ -359,69 +318,72 @@ public class MyHandler extends Handler {
                 r.days2.add(f);
             }
 
+            return r;
+
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+
+        return r;
+    }
 
 
 
-            //   "date": "2021-11-01T12:00:00+13:00",
-            //  "breakdown": {
-            //    "afternoon": {
-            //      "condition": "partly-cloudy"
-            //    },
-            //    "evening": {
-            //      "condition": "fine"
-            //    },
-            //    "morning": {
-            //      "condition": "cloudy"
-            //    },
-            //    "overnight": {
-            //      "condition": "few-showers"
-            //    }
-            //  },
-            //  "forecasts": [
-            //    {
-            //      "highTemp": "18",
-            //      "lowTemp": "11",
-            //      "statement": "Fine. Northerly winds.",
-            //      "sunrise": "2021-11-01T06:06:00+13:00",
-            //      "sunset": "2021-11-01T20:04:00+13:00"
-            //    }
-            //  ]
-            //}
-            //{
-            //  "date": "2021-11-02T12:00:00+13:00",
-            //  "breakdown": {
-            //    "afternoon": {
-            //      "condition": "few-showers"
-            //    },
-            //    "evening": {
-            //      "condition": "few-showers"
-            //    },
-            //    "morning": {
-            //      "condition": "partly-cloudy"
-            //    },
-            //    "overnight": {
-            //      "condition": "fine"
-            //    }
-            //  },
-            //  "forecasts": [
-            //    {
-            //      "highTemp": "16",
-            //      "lowTemp": "9",
-            //      "statement": "Cloud increasing in the morning. A few showers from around midday. Southerlies developing late morning, strong near the south coast.",
-            //      "sunrise": "2021-11-02T06:04:00+13:00",
-            //      "sunset": "2021-11-02T20:05:00+13:00"
-            //    }
-            //  ]
-            //}
+    private Forecast processJSONGraph(String content) {
 
+        Forecast r = new Forecast();
+
+        try {
+            JSONObject json = new JSONObject(content);
+            JSONObject joGraph = json.getJSONObject("graph");
+            JSONArray joColumns = joGraph.getJSONArray("columns");
+
+            // Each object looks like this
+            // 	{
+            //  	"date": "2021-10-31T01:00:00+13:00",
+            //		"rainFallPerHour": "0.2",
+            //		"rainfall": "0.2",
+            //		"temperature": "15.1",
+            //		"wind": {
+            //			"direction": "NW",
+            //			"speed": "20"
+            //			}
+            //		},
+
+
+            Date todayNow = new Date();
+
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+            for (int i = 0; i< joColumns.length(); i++) {
+                Graph g = new Graph();
+                JSONObject jograph = joColumns.getJSONObject(i);
+                try {
+                    g.date = df.parse(jograph.getString("date"));
+                    System.out.println(g.date);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                g.rainFallPerHour = jograph.getString("rainFallPerHour");
+                g.temperature = jograph.getString("temperature");
+
+                JSONObject joWind = jograph.getJSONObject("wind");
+
+                g.windDirection = joWind.getString("direction");
+                g.windSpeed = joWind.getString("speed");
+
+                if (g.date.after(todayNow)) {
+                    r.hourlyForecast.add(g);
+                }
+            }
 
             return r;
 
 
         } catch (JSONException e) {
-                e.printStackTrace();
+            e.printStackTrace();
         }
-
 
         return r;
     }
@@ -472,6 +434,8 @@ public class MyHandler extends Handler {
             return r;
         }
 
+
+        // Gets current temperature and the 48 hour hourly breakdown
         SpannableStringBuilder getCurrentTemperature() {
 
             SimpleDateFormat sdf = new SimpleDateFormat("E HH:00");
